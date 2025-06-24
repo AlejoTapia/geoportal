@@ -1,83 +1,33 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mi Geoportal - Bienvenida</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            margin: 0;
-            padding: 0;
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-        
-        .container {
-            background: white;
-            padding: 40px;
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-            text-align: center;
-            max-width: 500px;
-            margin: 20px;
-        }
-        
-        h1 {
-            color: #333;
-            font-size: 2.5em;
-            margin-bottom: 20px;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
-        }
-        
-        .subtitle {
-            color: #666;
-            font-size: 1.2em;
-            margin-bottom: 30px;
-            line-height: 1.6;
-        }
-        
-        .map-icon {
-            font-size: 4em;
-            color: #667eea;
-            margin-bottom: 20px;
-        }
-        
-        .welcome-text {
-            background: #f8f9fa;
-            padding: 20px;
-            border-radius: 10px;
-            border-left: 4px solid #667eea;
-            margin-top: 20px;
-        }
-        
-        .footer {
-            margin-top: 30px;
-            color: #888;
-            font-size: 0.9em;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <title>Mini Geoportal SIGTIERRAS</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <style>
+    #map { height: 100vh; }
+    .info { background: white; padding: 8px; border-radius: 4px; }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <div class="map-icon">🗺️</div>
-        <h1>¡Hola Mundo!</h1>
-        <div class="subtitle">
-            Bienvenido a mi <strong>Geoportal</strong>
-        </div>
-        
-        <div class="welcome-text">
-            <p>👋 ¡Saludos desde Ecuador! </p>
-            <p>Este es mi geoportal donde trabajo con datos espaciales, mapas interactivos y análisis geográfico.</p>
-            <p>🌍 Explorando el mundo a través de la geografía y los SIG</p>
-        </div>
-        
-        <div class="footer">
-            <p>Desarrollado con PostGIS y mucho ☕</p>
-        </div>
-    </div>
-</body>
-</html>
+  <div id="map"></div>
+
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <!-- Plugin para control de capas -->
+  <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
+
+  <script>
+    // Crear el mapa
+    const map = L.map('map').setView([-1.25, -78.5], 7); // Ecuador
+
+    // Mapa base
+    const baseMap = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+    // Capa WMS ejemplo (cambiar por tu servidor o GeoServer local)
+    const capaWMS = L.tileLayer.wms("https://geoserver.sigtierras.gob.ec/geoserver/sigtierras/wms", {
+      layers: 'sigtierras:Limite_Pro_
