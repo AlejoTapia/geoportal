@@ -1,33 +1,1112 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <title>Mini Geoportal SIGTIERRAS</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <!-- Leaflet CSS -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
-  <style>
-    #map { height: 100vh; }
-    .info { background: white; padding: 8px; border-radius: 4px; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Geoportal - Amenazas Naturales</title>
+    
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 1rem 2rem;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+            z-index: 1000;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .logo h1 {
+            color: #2c3e50;
+            font-size: 1.8rem;
+            font-weight: 700;
+        }
+
+        .controls {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 25px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #4CAF50, #45a049);
+            color: white;
+            box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #2196F3, #1976D2);
+            color: white;
+            box-shadow: 0 4px 15px rgba(33, 150, 243, 0.3);
+        }
+
+        .btn-secondary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(33, 150, 243, 0.4);
+        }
+
+        .btn-info {
+            background: linear-gradient(135deg, #17a2b8, #138496);
+            color: white;
+            box-shadow: 0 4px 15px rgba(23, 162, 184, 0.3);
+        }
+
+        .btn-info:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(23, 162, 184, 0.4);
+        }
+
+        .main-container {
+            display: flex;
+            height: calc(100vh - 80px);
+            position: relative;
+        }
+
+        .map-container {
+            flex: 1;
+            position: relative;
+            border-radius: 15px 0 0 15px;
+            overflow: hidden;
+            margin: 1rem 0 1rem 1rem;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        #map {
+            height: 100%;
+            width: 100%;
+        }
+
+        .sidebar {
+            width: 450px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            margin: 1rem 1rem 1rem 0;
+            border-radius: 0 15px 15px 0;
+            overflow-y: auto;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+        }
+
+        .sidebar.open {
+            transform: translateX(0);
+        }
+
+        .sidebar-header {
+            padding: 2rem;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .sidebar-content {
+            padding: 2rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .required:after {
+            content: " *";
+            color: #e74c3c;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: #4CAF50;
+            box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
+        }
+
+        .coord-group {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .coord-group input {
+            flex: 1;
+        }
+
+        .location-btn {
+            margin-top: 0.5rem;
+            background: linear-gradient(135deg, #2196F3, #1976D2);
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+
+        .location-btn:hover {
+            transform: translateY(-1px);
+        }
+
+        small {
+            color: #6c757d;
+            font-size: 0.85rem;
+        }
+
+        #status {
+            margin-top: 1rem;
+            padding: 1rem;
+            border-radius: 8px;
+            display: none;
+            font-weight: 600;
+        }
+
+        .success {
+            background: linear-gradient(135deg, #d4edda, #c3e6cb);
+            color: #155724;
+            border: 2px solid #4CAF50;
+        }
+
+        .error {
+            background: linear-gradient(135deg, #f8d7da, #f5c6cb);
+            color: #721c24;
+            border: 2px solid #e74c3c;
+        }
+
+        .loading {
+            background: linear-gradient(135deg, #fff3cd, #ffeaa7);
+            color: #856404;
+            border: 2px solid #ffc107;
+        }
+
+        /* Panel de Capas */
+        .layers-panel {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+            z-index: 1000;
+            max-width: 320px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .layers-panel h4 {
+            margin-bottom: 1rem;
+            color: #2c3e50;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .layer-group {
+            margin-bottom: 1.5rem;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 1rem;
+            background: rgba(255, 255, 255, 0.7);
+        }
+
+        .layer-group h5 {
+            margin-bottom: 0.75rem;
+            color: #495057;
+            font-size: 0.95rem;
+            font-weight: 600;
+            border-bottom: 1px solid #dee2e6;
+            padding-bottom: 0.5rem;
+        }
+
+        .layer-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 0.5rem;
+            padding: 0.5rem;
+            border-radius: 6px;
+            transition: background-color 0.2s ease;
+        }
+
+        .layer-item:hover {
+            background-color: rgba(0, 123, 255, 0.05);
+        }
+
+        .layer-checkbox {
+            margin: 0;
+            width: auto;
+            accent-color: #007bff;
+            transform: scale(1.2);
+        }
+
+        .layer-info {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+        }
+
+        .layer-name {
+            font-weight: 600;
+            color: #2c3e50;
+            font-size: 0.9rem;
+        }
+
+        .layer-description {
+            font-size: 0.8rem;
+            color: #6c757d;
+            margin-top: 0.2rem;
+        }
+
+        .layer-icon {
+            font-size: 1.2rem;
+            min-width: 24px;
+            text-align: center;
+        }
+
+        .legend {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 1rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+            max-width: 300px;
+        }
+
+        .legend h4 {
+            margin-bottom: 0.5rem;
+            color: #2c3e50;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.25rem;
+            font-size: 0.9rem;
+        }
+
+        .legend-color {
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            border: 2px solid #fff;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+        }
+
+        .loading-content {
+            background: white;
+            padding: 2rem;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #4CAF50;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 768px) {
+            .main-container {
+                flex-direction: column;
+            }
+            
+            .sidebar {
+                width: 100%;
+                height: 50%;
+                border-radius: 15px 15px 0 0;
+                margin: 0 1rem 1rem;
+                transform: translateY(100%);
+            }
+            
+            .sidebar.open {
+                transform: translateY(0);
+            }
+            
+            .map-container {
+                border-radius: 0 0 15px 15px;
+                margin: 1rem 1rem 0;
+            }
+
+            .layers-panel {
+                max-width: calc(100vw - 40px);
+                right: 10px;
+                top: 10px;
+            }
+        }
+    </style>
 </head>
 <body>
-  <div id="map"></div>
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-content">
+            <div class="spinner"></div>
+            <h3>Cargando capas del geoportal...</h3>
+        </div>
+    </div>
 
-  <!-- Leaflet JS -->
-  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-  <!-- Plugin para control de capas -->
-  <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
+    <div class="header">
+        <div class="logo">
+            <span style="font-size: 2rem;">🌍</span>
+            <h1>Geoportal de Amenazas Naturales</h1>
+        </div>
+        <div class="controls">
+            <button class="btn btn-info" onclick="toggleLayersPanel()">
+                🗂️ Capas
+            </button>
+            <button class="btn btn-secondary" onclick="loadAllLayers()">
+                🔄 Actualizar
+            </button>
+            <button class="btn btn-primary" onclick="toggleSidebar()">
+                📝 Nuevo Reporte
+            </button>
+        </div>
+    </div>
 
-  <script>
-    // Crear el mapa
-    const map = L.map('map').setView([-1.25, -78.5], 7); // Ecuador
+    <div class="main-container">
+        <div class="map-container">
+            <div id="map"></div>
+            
+            <!-- Panel de Control de Capas -->
+            <div class="layers-panel" id="layersPanel">
+                <h4>🗂️ Control de Capas</h4>
+                
+                <div class="layer-group">
+                    <h5>📊 Reportes y Datos</h5>
+                    <div class="layer-item">
+                        <span class="layer-icon">📍</span>
+                        <input type="checkbox" id="layer-reportes" class="layer-checkbox" checked onchange="toggleLayer('reportes')">
+                        <div class="layer-info">
+                            <span class="layer-name">Reportes de Amenazas</span>
+                            <span class="layer-description">Reportes ciudadanos de amenazas naturales</span>
+                        </div>
+                    </div>
+                </div>
 
-    // Mapa base
-    const baseMap = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; OpenStreetMap contributors'
-    }).addTo(map);
+                <div class="layer-group">
+                    <h5>🏢 Infraestructura</h5>
+                    <div class="layer-item">
+                        <span class="layer-icon">🛣️</span>
+                        <input type="checkbox" id="layer-avenidas" class="layer-checkbox" onchange="toggleLayer('avenidas')">
+                        <div class="layer-info">
+                            <span class="layer-name">Avenidas</span>
+                            <span class="layer-description">Red vial principal de la ciudad</span>
+                        </div>
+                    </div>
+                    <div class="layer-item">
+                        <span class="layer-icon">⚠️</span>
+                        <input type="checkbox" id="layer-accidentes" class="layer-checkbox" onchange="toggleLayer('accidentes')">
+                        <div class="layer-info">
+                            <span class="layer-name">Zonas de Accidentes</span>
+                            <span class="layer-description">Áreas con historial de accidentes</span>
+                        </div>
+                    </div>
+                </div>
 
-    // Capa WMS ejemplo (cambiar por tu servidor o GeoServer local)
-    const capaWMS = L.tileLayer.wms("https://geoserver.sigtierras.gob.ec/geoserver/sigtierras/wms", {
-      layers: 'sigtierras:Limite_Pro_
+                <div class="layer-group">
+                    <h5>🏛️ División Territorial</h5>
+                    <div class="layer-item">
+                        <span class="layer-icon">🗺️</span>
+                        <input type="checkbox" id="layer-parroquias" class="layer-checkbox" onchange="toggleLayer('parroquias')">
+                        <div class="layer-info">
+                            <span class="layer-name">Parroquias</span>
+                            <span class="layer-description">Límites administrativos parroquiales</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="layer-group">
+                    <h5>🆘 Seguridad y Emergencia</h5>
+                    <div class="layer-item">
+                        <span class="layer-icon">🛡️</span>
+                        <input type="checkbox" id="layer-puntos-seguros" class="layer-checkbox" onchange="toggleLayer('puntos_seguros')">
+                        <div class="layer-info">
+                            <span class="layer-name">Puntos Seguros</span>
+                            <span class="layer-description">Lugares seguros en caso de emergencia</span>
+                        </div>
+                    </div>
+                    <div class="layer-item">
+                        <span class="layer-icon">🏠</span>
+                        <input type="checkbox" id="layer-refugios" class="layer-checkbox" onchange="toggleLayer('refugio')">
+                        <div class="layer-info">
+                            <span class="layer-name">Refugios</span>
+                            <span class="layer-description">Refugios temporales de emergencia</span>
+                        </div>
+                    </div>
+                    <div class="layer-item">
+                        <span class="layer-icon">🚨</span>
+                        <input type="checkbox" id="layer-rutas-evacuacion" class="layer-checkbox" onchange="toggleLayer('rutas_evacuacion')">
+                        <div class="layer-info">
+                            <span class="layer-name">Rutas de Evacuación</span>
+                            <span class="layer-description">Rutas recomendadas para evacuación</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="legend">
+                <h4>🗺️ Leyenda - Amenazas</h4>
+                <div class="legend-item">
+                    <div class="legend-color" style="background-color: #4CAF50;"></div>
+                    <span>🟢 Bajo</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background-color: #FFC107;"></div>
+                    <span>🟡 Medio</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background-color: #FF9800;"></div>
+                    <span>🟠 Alto</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background-color: #F44336;"></div>
+                    <span>🔴 Crítico</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <button class="close-btn" onclick="toggleSidebar()">×</button>
+                <h2>📝 Nuevo Reporte de Amenaza</h2>
+                <p>Complete el formulario para reportar una nueva amenaza natural</p>
+            </div>
+            
+            <div class="sidebar-content">
+                <form id="reportForm">
+                    <div class="form-group">
+                        <label class="required" for="reporterName">Nombre del reportante</label>
+                        <input type="text" id="reporterName" name="reporterName" required minlength="2" placeholder="Ingrese su nombre completo">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="required" for="hazardType">Tipo de amenaza</label>
+                        <select id="hazardType" name="hazardType" required>
+                            <option value="">Seleccione una opción</option>
+                            <option value="inundacion">🌊 Inundación</option>
+                            <option value="deslizamiento">🏔️ Deslizamiento de tierra</option>
+                            <option value="sismo">🏢 Sismo/Terremoto</option>
+                            <option value="incendio">🔥 Incendio forestal</option>
+                            <option value="erupcion">🌋 Erupción volcánica</option>
+                            <option value="tsunami">🌊 Tsunami/Maremoto</option>
+                            <option value="tormenta">⛈️ Tormenta severa</option>
+                            <option value="otro">❓ Otro</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="required">Coordenadas GPS</label>
+                        <div class="coord-group">
+                            <input type="number" id="latitude" name="latitude" placeholder="Latitud" required step="any" min="-90" max="90">
+                            <input type="number" id="longitude" name="longitude" placeholder="Longitud" required step="any" min="-180" max="180">
+                        </div>
+                        <small>Haga clic en el mapa para seleccionar coordenadas</small>
+                        <button type="button" class="location-btn" onclick="getCurrentLocation()">
+                            📍 Usar mi ubicación actual
+                        </button>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="required" for="eventDate">Fecha y hora del evento</label>
+                        <input type="datetime-local" id="eventDate" name="eventDate" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="required" for="severity">Nivel de gravedad</label>
+                        <select id="severity" name="severity" required>
+                            <option value="">Seleccione una opción</option>
+                            <option value="bajo">🟢 Bajo</option>
+                            <option value="medio">🟡 Medio</option>
+                            <option value="alto">🟠 Alto</option>
+                            <option value="critico">🔴 Crítico</option>
+                        </select>
+                    </div>
+                    
+                    <button type="submit" id="submitBtn" class="btn btn-primary" style="width: 100%;">
+                        📤 Enviar Reporte
+                    </button>
+                </form>
+
+                <div id="status"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Leaflet JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+    
+    <script>
+        // Configuración de Supabase
+        const SUPABASE_URL = 'https://ygsecmrxynfokrlfzsvr.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inlnc2VjbXJ4eW5mb2tybGZ6c3ZyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTMwNzYyNDksImV4cCI6MjA2ODY1MjI0OX0.xIc8en_R9xPyYtK0fO7itgaEq8Ib0ZmkFRX3QcwUlTg';
+
+        // Variables globales
+        let map;
+        let layerGroups = {};
+        let clickMarker;
+        let layersPanelVisible = true;
+
+        // Configuración de las capas
+        const layerConfig = {
+            reportes: {
+                table: 'reportes_amenazas',
+                geomField: 'geometry',
+                type: 'point',
+                style: { color: '#FF6B6B', radius: 8 },
+                popupFields: ['nombre_reportante', 'tipo_amenaza', 'fecha_evento', 'gravedad']
+            },
+            avenidas: {
+                table: 'avenidas',
+                geomField: 'geom',
+                type: 'line',
+                style: { color: '#2196F3', weight: 3, opacity: 0.8 },
+                popupFields: ['nam', 'd_typ', 'd_pfx']
+            },
+            accidentes: {
+                table: 'accidentes',
+                geomField: 'geom',
+                type: 'line',
+                style: { color: '#F44336', weight: 2, opacity: 0.7, dashArray: '10,5' },
+                popupFields: ['nam', 'shape_leng']
+            },
+            parroquias: {
+                table: 'parroquias',
+                geomField: 'geom',
+                type: 'polygon',
+                style: { 
+                    color: '#9C27B0', 
+                    weight: 2, 
+                    opacity: 0.8, 
+                    fillColor: '#9C27B0', 
+                    fillOpacity: 0.1 
+                },
+                popupFields: ['dpa_despar', 'ad_zonal']
+            },
+            puntos_seguros: {
+                table: 'puntos seguros',
+                geomField: 'geom',
+                type: 'point',
+                style: { color: '#4CAF50', radius: 6 },
+                popupFields: ['nam', 'dir', 'capcd']
+            },
+            refugio: {
+                table: 'refugio',
+                geomField: 'geom',
+                type: 'point',
+                style: { color: '#FF9800', radius: 6 },
+                popupFields: ['nam', 'area', 'aforo', 'centro_med', 'guardiania']
+            },
+            rutas_evacuacion: {
+                table: 'rutas evacuacion',
+                geomField: 'geom',
+                type: 'line',
+                style: { color: '#FF5722', weight: 4, opacity: 0.9, dashArray: '15,10' },
+                popupFields: ['nam_via', 'canton', 'adm_zonal']
+            }
+        };
+
+        // Iconos personalizados para diferentes tipos de amenaza
+        const hazardIcons = {
+            'inundacion': { emoji: '🌊', color: '#2196F3' },
+            'deslizamiento': { emoji: '🏔️', color: '#8BC34A' },
+            'sismo': { emoji: '🏢', color: '#795548' },
+            'incendio': { emoji: '🔥', color: '#FF5722' },
+            'erupcion': { emoji: '🌋', color: '#E91E63' },
+            'tsunami': { emoji: '🌊', color: '#00BCD4' },
+            'tormenta': { emoji: '⛈️', color: '#9C27B0' },
+            'otro': { emoji: '❓', color: '#607D8B' }
+        };
+
+        // Colores según gravedad
+        const severityColors = {
+            'bajo': '#4CAF50',
+            'medio': '#FFC107',
+            'alto': '#FF9800',
+            'critico': '#F44336'
+        };
+
+        // Inicialización
+        window.onload = function() {
+            initializeMap();
+            initializeForm();
+            initializeLayerGroups();
+            loadAllLayers();
+        };
+
+        function initializeMap() {
+            // Inicializar mapa centrado en Costa Rica
+            map = L.map('map').setView([9.7489, -83.7534], 8);
+
+            // Agregar capa base
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors',
+                maxZoom: 19
+            }).addTo(map);
+
+            // Evento de clic en el mapa
+            map.on('click', function(e) {
+                const { lat, lng } = e.latlng;
+                updateCoordinates(lat, lng);
+                addClickMarker(lat, lng);
+            });
+        }
+
+        function initializeLayerGroups() {
+            // Inicializar grupos de capas
+            Object.keys(layerConfig).forEach(layerName => {
+                layerGroups[layerName] = L.layerGroup().addTo(map);
+            });
+        }
+
+        function initializeForm() {
+            // Establecer fecha actual
+            const now = new Date();
+            now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+            document.getElementById('eventDate').value = now.toISOString().slice(0, 16);
+
+            // Validación del formulario
+            document.getElementById('reportForm').addEventListener('submit', handleSubmit);
+            
+            // Validación de coordenadas en tiempo real
+            document.getElementById('latitude').addEventListener('input', validateLatitude);
+            document.getElementById('longitude').addEventListener('input', validateLongitude);
+        }
+
+        async function loadAllLayers() {
+            try {
+                showLoadingOverlay(true);
+                
+                // Cargar todas las capas habilitadas
+                const loadPromises = Object.keys(layerConfig).map(async (layerName) => {
+                    if (document.getElementById(`layer-${layerName.replace('_', '-')}`).checked) {
+                        await loadLayer(layerName);
+                    }
+                });
+                
+                await Promise.all(loadPromises);
+                
+            } catch (error) {
+                console.error('Error cargando capas:', error);
+                showStatus('❌ Error al cargar algunas capas del geoportal', 'error');
+            } finally {
+                showLoadingOverlay(false);
+            }
+        }
+
+        async function loadLayer(layerName) {
+            try {
+                const config = layerConfig[layerName];
+                if (!config) return;
+
+                // Limpiar capa existente
+                layerGroups[layerName].clearLayers();
+
+                // Mostrar estado de carga
+                showStatus(`⏳ Cargando capa ${layerName}...`, 'loading');
+
+                // Obtener datos de Supabase
+                const response = await fetch(`${SUPABASE_URL}/rest/v1/${encodeURIComponent(config.table)}?select=*`, {
+                    headers: {
+                        'apikey': SUPABASE_KEY,
+                        'Authorization': `Bearer ${SUPABASE_KEY}`
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Error al cargar ${layerName}: ${response.statusText}`);
+                }
+
+                const data = await response.json();
+
+                // Procesar datos geoespaciales
+                data.forEach(feature => {
+                    const geom = feature[config.geomField];
+                    
+                    if (!geom) return;
+
+                    try {
+                        // Crear geometría según el tipo
+                        switch(config.type) {
+                            case 'point':
+                                let lat, lng;
+                                if (geom.type === 'Point') {
+                                    // Para geometrías GeoJSON
+                                    lng = geom.coordinates[0];
+                                    lat = geom.coordinates[1];
+                                } else if (feature.latitud && feature.longitud) {
+                                    // Para reportes_amenazas que podrían tener las coordenadas en campos separados
+                                    lat = feature.latitud;
+                                    lng = feature.longitud;
+                                } else if (feature.coord_y && feature.coord_x) {
+                                    // Para refugios que tienen coord_x y coord_y
+                                    lat = feature.coord_y;
+                                    lng = feature.coord_x;
+                                } else {
+                                    return;
+                                }
+                                
+                                const point = L.circleMarker([lat, lng], config.style);
+                                
+                                // Añadir popup con información
+                                if (config.popupFields) {
+                                    const popupContent = createPopupContent(feature, config.popupFields);
+                                    if (popupContent) {
+                                        point.bindPopup(popupContent);
+                                    }
+                                }
+                                
+                                layerGroups[layerName].addLayer(point);
+                                break;
+                                
+                            case 'line':
+                                let lineCoords = [];
+                                if (geom.type === 'MultiLineString') {
+                                    // Procesar cada parte de la MultiLineString
+                                    geom.coordinates.forEach(part => {
+                                        lineCoords = part.map(coord => [coord[1], coord[0]]);
+                                        const line = L.polyline(lineCoords, config.style);
+                                        
+                                        // Añadir popup con información
+                                        if (config.popupFields) {
+                                            const popupContent = createPopupContent(feature, config.popupFields);
+                                            if (popupContent) {
+                                                line.bindPopup(popupContent);
+                                            }
+                                        }
+                                        
+                                        layerGroups[layerName].addLayer(line);
+                                    });
+                                } else if (geom.type === 'LineString') {
+                                    lineCoords = geom.coordinates.map(coord => [coord[1], coord[0]]);
+                                    const line = L.polyline(lineCoords, config.style);
+                                    
+                                    // Añadir popup con información
+                                    if (config.popupFields) {
+                                        const popupContent = createPopupContent(feature, config.popupFields);
+                                        if (popupContent) {
+                                            line.bindPopup(popupContent);
+                                        }
+                                    }
+                                    
+                                    layerGroups[layerName].addLayer(line);
+                                }
+                                break;
+                                
+                            case 'polygon':
+                                if (geom.type === 'MultiPolygon') {
+                                    // Procesar cada parte del MultiPolygon
+                                    geom.coordinates.forEach(polygon => {
+                                        const polygonCoords = polygon[0].map(coord => [coord[1], coord[0]]);
+                                        const poly = L.polygon(polygonCoords, config.style);
+                                        
+                                        // Añadir popup con información
+                                        if (config.popupFields) {
+                                            const popupContent = createPopupContent(feature, config.popupFields);
+                                            if (popupContent) {
+                                                poly.bindPopup(popupContent);
+                                            }
+                                        }
+                                        
+                                        layerGroups[layerName].addLayer(poly);
+                                    });
+                                } else if (geom.type === 'Polygon') {
+                                    const polygonCoords = geom.coordinates[0].map(coord => [coord[1], coord[0]]);
+                                    const poly = L.polygon(polygonCoords, config.style);
+                                    
+                                    // Añadir popup con información
+                                    if (config.popupFields) {
+                                        const popupContent = createPopupContent(feature, config.popupFields);
+                                        if (popupContent) {
+                                            poly.bindPopup(popupContent);
+                                        }
+                                    }
+                                    
+                                    layerGroups[layerName].addLayer(poly);
+                                }
+                                break;
+                        }
+                    } catch (error) {
+                        console.error(`Error procesando feature en capa ${layerName}:`, error);
+                    }
+                });
+
+                showStatus(`✅ Capa ${layerName} cargada correctamente`, 'success');
+                setTimeout(() => document.getElementById('status').style.display = 'none', 3000);
+
+            } catch (error) {
+                console.error(`Error cargando capa ${layerName}:`, error);
+                showStatus(`❌ Error al cargar la capa ${layerName}`, 'error');
+            }
+        }
+
+        function createPopupContent(feature, fields) {
+            let content = '';
+            fields.forEach(field => {
+                if (feature[field] !== undefined && feature[field] !== null) {
+                    content += `<b>${field}:</b> ${feature[field]}<br>`;
+                }
+            });
+            return content || null;
+        }
+
+        function toggleLayer(layerName) {
+            const checkbox = document.getElementById(`layer-${layerName.replace('_', '-')}`);
+            if (checkbox.checked) {
+                loadLayer(layerName);
+                map.addLayer(layerGroups[layerName]);
+            } else {
+                map.removeLayer(layerGroups[layerName]);
+            }
+        }
+
+        function toggleLayersPanel() {
+            const panel = document.getElementById('layersPanel');
+            layersPanelVisible = !layersPanelVisible;
+            panel.style.display = layersPanelVisible ? 'block' : 'none';
+        }
+
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('open');
+        }
+
+        function updateCoordinates(lat, lng) {
+            document.getElementById('latitude').value = lat.toFixed(6);
+            document.getElementById('longitude').value = lng.toFixed(6);
+        }
+
+        function addClickMarker(lat, lng) {
+            // Eliminar marcador anterior si existe
+            if (clickMarker) {
+                map.removeLayer(clickMarker);
+            }
+            
+            // Crear nuevo marcador
+            clickMarker = L.circleMarker([lat, lng], {
+                color: '#FF5722',
+                radius: 8,
+                weight: 2,
+                fillColor: '#FF9800',
+                fillOpacity: 0.8
+            }).addTo(map);
+            
+            // Mover la vista al marcador
+            map.setView([lat, lng], map.getZoom());
+        }
+
+        function getCurrentLocation() {
+            if (navigator.geolocation) {
+                showStatus('📍 Obteniendo tu ubicación...', 'loading');
+                
+                navigator.geolocation.getCurrentPosition(
+                    position => {
+                        const { latitude, longitude } = position.coords;
+                        updateCoordinates(latitude, longitude);
+                        addClickMarker(latitude, longitude);
+                        showStatus('✅ Ubicación obtenida correctamente', 'success');
+                        setTimeout(() => document.getElementById('status').style.display = 'none', 2000);
+                    },
+                    error => {
+                        console.error('Error obteniendo ubicación:', error);
+                        showStatus('❌ No se pudo obtener tu ubicación', 'error');
+                    }
+                );
+            } else {
+                showStatus('❌ Geolocalización no soportada por tu navegador', 'error');
+            }
+        }
+
+        function validateLatitude() {
+            const input = document.getElementById('latitude');
+            const value = parseFloat(input.value);
+            
+            if (isNaN(value) || value < -90 || value > 90) {
+                input.setCustomValidity('La latitud debe estar entre -90 y 90');
+            } else {
+                input.setCustomValidity('');
+            }
+        }
+
+        function validateLongitude() {
+            const input = document.getElementById('longitude');
+            const value = parseFloat(input.value);
+            
+            if (isNaN(value) || value < -180 || value > 180) {
+                input.setCustomValidity('La longitud debe estar entre -180 y 180');
+            } else {
+                input.setCustomValidity('');
+            }
+        }
+
+        async function handleSubmit(e) {
+            e.preventDefault();
+            
+            const form = e.target;
+            const formData = new FormData(form);
+            const data = Object.fromEntries(formData.entries());
+            
+            try {
+                showLoadingOverlay(true);
+                showStatus('⏳ Enviando reporte...', 'loading');
+                
+                // Crear geometría GeoJSON para el reporte
+                const geometry = {
+                    type: "Point",
+                    coordinates: [
+                        parseFloat(data.longitude),
+                        parseFloat(data.latitude)
+                    ]
+                };
+                
+                // Enviar datos a Supabase
+                const response = await fetch(`${SUPABASE_URL}/rest/v1/reportes_amenazas`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'apikey': SUPABASE_KEY,
+                        'Authorization': `Bearer ${SUPABASE_KEY}`
+                    },
+                    body: JSON.stringify({
+                        nombre_reportante: data.reporterName,
+                        tipo_amenaza: data.hazardType,
+                        fecha_evento: data.eventDate,
+                        gravedad: data.severity,
+                        latitud: parseFloat(data.latitude),
+                        longitud: parseFloat(data.longitude),
+                        geometry: geometry
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`Error ${response.status}: ${response.statusText}`);
+                }
+                
+                showStatus('✅ Reporte enviado correctamente', 'success');
+                form.reset();
+                
+                // Recargar capa de reportes
+                await loadLayer('reportes');
+                
+            } catch (error) {
+                console.error('Error enviando reporte:', error);
+                showStatus('❌ Error al enviar el reporte', 'error');
+            } finally {
+                showLoadingOverlay(false);
+                setTimeout(() => document.getElementById('status').style.display = 'none', 3000);
+            }
+        }
+
+        function showStatus(message, type) {
+            const statusElement = document.getElementById('status');
+            statusElement.textContent = message;
+            statusElement.className = type;
+            statusElement.style.display = 'block';
+        }
+
+        function showLoadingOverlay(show) {
+            document.getElementById('loadingOverlay').style.display = show ? 'flex' : 'none';
+        }
+    </script>
+</body>
+</html>
